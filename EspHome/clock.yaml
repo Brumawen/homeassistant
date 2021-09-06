@@ -1,0 +1,123 @@
+esphome:
+  name: clock
+  platform: ESP32
+  board: esp32dev
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "9e2f7fd69ea27db30fe66e6fc386b621"
+
+wifi:
+  ssid: "<wifi ssid>"
+  password: "<ssid password>"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Clock Fallback Hotspot"
+    password: "eTskjOiH4in9"
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
+
+display:
+  platform: tm1637
+  clk_pin: GPIO23
+  dio_pin: GPIO22
+  update_interval: 500ms
+  lambda: |-
+      static int i = 0;
+      static int s = 0;
+      static int m = 0;
+      static int h = 0;
+      i++;
+      if ((i % 2) == 0) {
+        s++;
+        if (s > 0 && (s % 60) == 0) {
+          s = 0;
+          m++;
+          if (m > 0 && (m % 60) == 0) {
+            m = 0;
+            h++;
+            if (h > 99) {
+              h = 0;
+            }
+          }
+        }
+      }
+      if ((id(reset1).state)) {
+        s = 0;
+        m = 0;
+        h = 0;
+        id(reset1).turn_off();
+      }
+      if (id(timer1).state) {
+        if (h == 0) {
+          if ((i % 2) == 0)
+            it.printf("%2i.%02i", m, s);
+          else
+            it.printf("%2i%02i", m, s);
+        }
+        else {
+          if ((i % 2) == 0)
+            it.printf("%2i.%02i", h, m);
+          else
+            it.printf("%2i%02i", h, m);
+        }
+      }
+      else {
+        if ((i % 2) == 0)
+          it.strftime("%H.%M", id(homeassistant_time).now());
+        else
+          it.strftime("%H%M", id(homeassistant_time).now());
+      }
+
+switch:
+  - platform: gpio
+    name: "ClockTimer"
+    pin: GPIO16
+    id: "timer1"
+  - platform: gpio
+    name: "ClockReset"
+    pin: GPIO17
+    id: "reset1"
+  - platform: gpio
+    name: "MicMute"
+    pin: GPIO18
+    id: "mute1"
+
+binary_sensor:
+  - platform: gpio
+    internal: true
+    pin: 
+      number: GPIO03
+      inverted: true
+    name: "ClockButton"
+    on_click:
+      - min_length: 50ms
+        max_length: 500ms
+        then:
+          - switch.toggle: timer1
+      - min_length: 600ms
+        max_length: 2000ms
+        then:
+          - switch.turn_on: reset1
+  - platform: gpio
+    internal: true
+    pin:
+      number: GPIO19
+      inverted: true
+      mode: INPUT_PULLUP
+    name: "MuteButton"
+    on_click:
+      - min_length: 50ms
+        max_length: 500ms
+        then:
+          - switch.toggle: mute1

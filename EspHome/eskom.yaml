@@ -1,0 +1,78 @@
+substitutions:
+  device_name: eskom
+  device_description: "Eskom energy consumption"
+  pulse_pin: GPIO22
+  red_pin: GPIO19
+  dht_pin: GPIO18
+  
+esphome:
+  name: eskom
+  platform: ESP32
+  board: nodemcu-32s
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "4028e12890fd743c042346f09a63ac6f"
+
+wifi:
+  networks:
+    - ssid: "<wifi ssid>"
+      password: "<ssid password>"
+
+captive_portal:
+
+status_led:
+  pin: GPIO2
+  
+output:
+  - platform: gpio
+    pin: ${red_pin}
+    id: output_red
+
+light:
+  - platform: binary
+    internal: true
+    id: led_red
+    name: Red
+    output: output_red
+    
+sensor:
+  - platform: dht
+    pin: ${dht_pin}
+    temperature:
+      name: "Office Temperature"
+    humidity:
+      name: "Office Humidity"
+    update_interval: 60s
+  - platform: pulse_meter
+    name: "eskom_meter"
+    unit_of_measurement: 'W'
+    state_class: measurement
+    device_class: power
+    icon: mdi:flash-outline
+    accuracy_decimals: 0
+    pin: ${pulse_pin}
+    on_value:
+      then:
+        - light.turn_on:
+            id: led_red
+            flash_length: 400ms
+    filters:
+      # multiply value = (60 / imp value) * 1000
+      - multiply: 60
+    total:
+      name: "eskom_total"
+      unit_of_measurement: 'kWh'
+      icon: mdi:circle-slice-3
+      last_reset_type: auto
+      state_class: measurement
+      device_class: energy
+      accuracy_decimals: 3
+      filters:
+        # multiply value = 1 / imp value
+        - multiply: 0.001
