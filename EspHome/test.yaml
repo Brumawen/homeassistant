@@ -1,0 +1,34 @@
+esphome:
+  name: test
+  platform: ESP32
+  board: esp32dev
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "4b2ca6f9b4f2a951ff910b7acc9bfa6d"
+
+wifi:
+  ssid: "<wifi ssid>"
+  password: "<ssid password>"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Test Fallback Hotspot"
+    password: "M5mlfbJIj60j"
+
+captive_portal:
+
+switch:
+  - platform: gpio
+    pin: GPIO2
+    name: "Onboard LED"
+    
+sensor:
+  - platform: wifi_signal
+    name: "Test Wifi Signal"
+    update_interval: 60s

@@ -93,6 +93,11 @@ switch:
     pin: GPIO18
     id: "mute1"
 
+sensor:
+  - platform: wifi_signal
+    name: "Upstairs Wifi Signal"
+    update_interval: 60s
+
 binary_sensor:
   - platform: gpio
     internal: true
